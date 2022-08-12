@@ -1,0 +1,892 @@
+<!--
+
+Same idea
+
+Each item will have a set of classes assigned to it
+
+For example, the set of classes for an item could be 
+
+"Breakfast dfm mccarran"
+
+The 3 classes assigned to an item will be:
+
+1) Meal type
+2) Dietary Category(s)
+3) Location
+
+Side note: the editor will have a checkbox for each location, with a selector for all
+
+Now that each item has its set of classes, build the buttons
+
+Meal type buttons (carousel)
+ - "All" will reset all sub filters and show every single item
+ - can only select one at a time
+ - display all items with the class of the selected meal type i.e. "Breakfast", "Lunch", "Dinner", etc.
+ - changing the meal type will reset all sub filters such as diet category
+ 
+Global tracker of the current meal type, var vMealType
+ 
+Dietary Buttons
+  - can select multiple at once
+  - display all items with the class of the selected diet category AND the selected location AND the meal type
+
+Global tracker of the selected dietary categories
+  
+Location Buttons
+ - can select one at a time
+ - display all items with the class of the selected location AND the selected diet category AND the meal type
+ 
+Global tracker of the selected location
+
+Side note about CSS
+
+The way this works is everytime a choice is made (filtering), I fade EVERYTHING out, then REFADE back in the correct selections
+
+Need to clean up JSON and the editor
+
+Add an array to the json called location:["location1", "location2", "location3", etc.]
+
+fading issue if you spam stuff, fix this?
+
+-->
+
+<script>
+
+        var menuItemsGlobal;
+        
+        function createUUID() {
+           return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+              var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+              return v.toString(16);
+           });
+        }
+        
+        function closeModal(){
+            $("#itemModal").fadeOut(500);
+            
+            setTimeout(function(){
+                //reset everything
+                document.getElementById("itemDietaryInfoTitle").style.display = "none";
+                document.getElementById("itemDietaryInfo").innerHTML = "";
+                
+                document.getElementById("itemDFMTitle").style.display = "none";
+                document.getElementById("itemDFM").innerHTML = "";
+                
+                document.getElementById("itemGFMTitle").style.display = "none";
+                document.getElementById("itemGFM").innerHTML = "";
+                
+                document.getElementById("itemVGMTitle").style.display = "none";
+                document.getElementById("itemVGM").innerHTML = "";
+                
+                //NEW KTM
+                document.getElementById("itemKTMTitle").style.display = "none";
+                document.getElementById("itemKTM").innerHTML = "";
+            },500);
+        }
+		
+		//open the modal
+		function openModal(category, itemName){
+		    
+		    //read in the json file
+            var xhttp = new XMLHttpRequest();
+            xhttp.onload = function() {
+                var menuItems = JSON.parse(this.responseText);
+                console.log("Open modal");
+		    
+    		    //get the relevant item from the menuItems array
+    		    var categoryList = menuItems[category];
+    		    
+                console.log(categoryList);
+    		    
+    		    //get the item object
+    		    var itemInfo;
+    		    for(i = 0; i < categoryList.length; i++){
+    		        if(categoryList[i].Name.replace("'", "#") == itemName){
+    		            itemInfo = categoryList[i];
+    		            break;
+    		        }
+    		    }
+    		    
+    		    //set all the default (always showing) div values
+    		    document.getElementById("itemImage").src = itemInfo.url; //image
+    		    document.getElementById("itemName").innerHTML = itemName.replace("#", "'"); //name
+    		    document.getElementById("itemDescription").innerHTML = itemInfo.Description; //description
+    		    
+    		    //set the divs if there is info to show
+    		    
+    		    //if there is dietary information to show (calories)
+    		    if(itemInfo["Dietary Information"] != ""){
+    		        
+    		        //show the dfm title
+    		        document.getElementById("itemDietaryInfoTitle").style.display = "block";
+    		        
+    		        //insert the calorie count into the div
+    		        var dietaryInformationString = "<ul>";
+    		        for(i = 0; i < itemInfo["Dietary Information"].length; i++){
+    		            if(itemInfo["Dietary Information"][i] != ""){
+    		                dietaryInformationString += "<li>" + itemInfo["Dietary Information"][i] + "</li>";
+    		            }
+    		        }
+    		        document.getElementById("itemDietaryInfo").innerHTML = dietaryInformationString;
+    		    }
+    		    
+    		    //if there is dairy free with mods
+    		    if(itemInfo.dfm[0] != ''){
+    		        
+    		        //show the dfm title
+    		        document.getElementById("itemDFMTitle").style.display = "block";
+    		        
+    		        //loop through the dfm modifications to create a list and insert it into the div
+    		        var dfmString = "<ul>";
+    		        for(i = 0; i < itemInfo.dfm.length; i++){
+    		            if(itemInfo.dfm[i] != ""){
+    		                dfmString += "<li>" + itemInfo.dfm[i] + "</li>";
+    		            }
+    		        }
+    		        dfmString += "</ul>";
+    		         document.getElementById("itemDFM").innerHTML = dfmString;
+    		        
+    		    }
+    		    
+    		    //if there is gluten free with mods
+    		    if(itemInfo.gfm[0] != ''){
+    		        
+    		        //show the dfm title
+    		        document.getElementById("itemGFMTitle").style.display = "block";
+    		        
+    		        //loop through the dfm modifications to create a list and insert it into the div
+    		        var gfmString = "<ul>";
+    		        for(i = 0; i < itemInfo.gfm.length; i++){
+    		            if(itemInfo.gfm[i] != ""){
+    		                gfmString += "<li>" + itemInfo.gfm[i] + "</li>";
+    		            }
+    		        }
+    		        gfmString += "</ul>";
+    		        document.getElementById("itemGFM").innerHTML = gfmString;
+    		        
+    		    }
+    		    
+    		    //if there is vegan free with mods
+    		    if(itemInfo.vgm[0] != ''){
+    		        
+    		        //show the dfm title
+    		        document.getElementById("itemVGMTitle").style.display = "block";
+    		        
+    		        //loop through the dfm modifications to create a list and insert it into the div
+    		        var vgmString = "<ul>";
+    		        for(i = 0; i < itemInfo.vgm.length; i++){
+    		            if(itemInfo.vgm[i] != ""){
+    		                vgmString += "<li>" + itemInfo.vgm[i] + "</li>";
+    		            }
+    		        }
+    		        vgmString += "</ul>"
+    		         document.getElementById("itemVGM").innerHTML = vgmString;
+    		        
+    		    }
+    		    
+    		    //if there is keto with mods
+    		    if(itemInfo.ktm != null && itemInfo.ktm[0] != ''){
+    		        
+    		        //show the dfm title
+    		        document.getElementById("itemKTMTitle").style.display = "block";
+    		        
+    		        //loop through the dfm modifications to create a list and insert it into the div
+    		        var ktmString = "<ul>";
+    		        for(i = 0; i < itemInfo.ktm.length; i++){
+    		            if(itemInfo.ktm[i] != ""){
+    		                ktmString += "<li>" + itemInfo.ktm[i] + "</li>";
+    		            }
+    		        }
+    		        ktmString += "</ul>"
+    		        document.getElementById("itemKTM").innerHTML = ktmString;
+    		
+    		    }
+    		      
+    		    $("#itemModal").fadeIn();
+            };
+            xhttp.open("GET", "https://www.vebien.com/testingmenu3.json?32", true);
+            xhttp.send();
+		}
+        
+        //create all the item divs, with their respective classes
+        function vCreateItems(){
+            
+            //read in the json file
+            var xhttp = new XMLHttpRequest();
+            xhttp.onload = function() {
+   
+                //read the menu json into a js object
+                var menuItems = JSON.parse(this.responseText);
+                
+                console.log(menuItems);
+                
+                menuItemsGlobal = menuItems;
+       
+                //stores the html for all the item divs (will be injected into the container)
+                var allItemsHTMLString = "";
+       
+                //array of the category keys
+                var categories = Object.keys(menuItems);
+                
+                //loop through each category
+                for(i = 0; i < categories.length; i++){
+                    var category = categories[i];
+                    
+                    //add category header
+                    allItemsHTMLString += "<h2 class='vCategoryHeader' id='" + categories[i].replace(/\s/g, '') + "Header2'>" + category + "</h2>";
+                    
+                    //loop through each item in the category
+                    for(j = 0; j < menuItems[category].length; j++){
+                        
+                        var menuItem = menuItems[category][j];
+                        
+                        //loop through each item in the category
+                        var itemString = "";
+                        
+                        //create the dietary category classes
+                        var dietaryCategoriesClassesString = "";
+                        
+                        //create the dietary category labels (for display)
+                        var dietaryCategoriesDisplayString = "";
+                        
+                        //removing empty string
+                        menuItem["Diet Category"] = menuItem["Diet Category"].filter(function(item) {
+                            return item !== "";
+                        });
+                        
+                        //if there is a dietary category
+                        if(menuItem["Diet Category"].length > 0){
+                            for(k = 0; k < menuItem["Diet Category"].length; k++){
+                                
+                                dietaryCategoriesClassesString += menuItem["Diet Category"][k];
+                                
+                                if(menuItem["Diet Category"][k] == "dfm"){
+                                    dietaryCategoriesDisplayString += "Dairy Free w/ mods";
+                                }
+                                if(menuItem["Diet Category"][k] == "df"){
+                                    dietaryCategoriesDisplayString += "Dairy Free";
+                                }
+                                else if(menuItem["Diet Category"][k] == "gfm"){
+                                    dietaryCategoriesDisplayString += "Gluten Free w/ mods";
+                                }
+                                else if(menuItem["Diet Category"][k] == "gf"){
+                                    dietaryCategoriesDisplayString += "Gluten Free";
+                                }
+                                else if(menuItem["Diet Category"][k] == "vg"){
+                                    dietaryCategoriesDisplayString += "Vegan";
+                                }
+                                else if(menuItem["Diet Category"][k] == "vgm"){
+                                    dietaryCategoriesDisplayString += "Vegan w/ mods";
+                                }
+                                else if(menuItem["Diet Category"][k] == "kt"){
+                                    dietaryCategoriesDisplayString += "Keto"; //NEW KETO
+                                }
+                                else if(menuItem["Diet Category"][k] == "ktm"){
+                                    dietaryCategoriesDisplayString += "Keto w/ mods"; //NEW KETO
+                                }
+                                
+                                if(k != menuItem["Diet Category"].length - 1){
+                                    dietaryCategoriesClassesString += " ";
+                                    dietaryCategoriesDisplayString += " • "; //adding spaces in between the class(es)
+                                }
+                            }
+                        }
+                        
+                        var price = "";
+                        if(Array.isArray(menuItem["Price"])){
+                            price = menuItem["Price"][0] + "/" + menuItem["Price"][1];
+                        } else {
+                            price = menuItem["Price"];
+                        }
+                        
+                        var locationsClassesString = "";
+                        if(menuItem["Locations"] != "ALL"){
+                            for(k = 0; k < menuItem["Locations"].length; k++){
+                                locationsClassesString += " " + menuItem["Locations"][k].replace(/\s/g, '');
+                            }
+                        } else {
+                            for(k = 1; k < vLocations.length; k++){
+                                locationsClassesString += " " + vLocations[k];
+                            }   
+                        }
+                        
+                        //note: the classes will store the necessary categorizations
+                        itemString += "<div class='vMenuItem " + category.replace(/\s/g, '') + " " + dietaryCategoriesClassesString + locationsClassesString + "' onclick='openModal(" + '"' + category + '", ' + '"' + menuItem["Name"].replace("'", "#") + '"' + ")'>";
+                        itemString += "<img class='vMenuItemImage' src='" + menuItem["url"] + "'/>";
+                        itemString += "<div class='vMenuItemWordBox'><div class='vMenuItemName'>" + menuItem["Name"] + "</div>";
+                        itemString += "<div class='vMenuItemPrice'>" + price + "</div>";
+                        itemString += "<div class='vMenuItemDescription'>" + menuItem["Description"] + "</div>";
+                        itemString += "<div class='vMenuItemDietary'>" + dietaryCategoriesDisplayString + "</div>";
+                        itemString += "</div></div>";
+                        
+                        //add the item div to the master html string (to be injected)
+                        allItemsHTMLString += itemString;
+                    }
+                }
+                
+                //after all items have been added, inject the html
+                document.getElementById("vMenuItems").innerHTML = allItemsHTMLString;
+            };
+            xhttp.open("GET", "https://www.vebien.com/testingmenu3.json?3", true);
+            xhttp.send();
+        }
+        
+        //====== GLOBAL VARIABLES to track the selections ============
+        
+        var currentMealType = "All";
+        
+        var activeDietTypes = {};
+        activeDietTypes["All"] = true;
+        activeDietTypes["dfm"] = false;
+        activeDietTypes["df"] = false;
+        activeDietTypes["gfm"] = false;
+        activeDietTypes["gf"] = false;
+        activeDietTypes["vg"] = false;
+        activeDietTypes["vgm"] = false;
+        activeDietTypes["kt"] = false;
+        activeDietTypes["ktm"] = false;
+        
+        var currentLocation = "All";
+        
+        var vDietCategories = ["All", "dfm", "gfm", "vg", "vgm", "kt"]; 
+        
+        var categories = [
+    		"All",
+    		"Breakfast",
+    		"Salads",
+    		"Sandwiches",
+    		"Wraps",
+    		"Pasta",
+    		"Juices",
+    		"Smoothies",
+    		"Coffee",
+    		"Soup",
+    		"Kids",
+    		"Beverages",
+    		"Bakery",
+    		"Sides"
+	    ];
+	    
+	    var vLocations = [
+	        "All",
+	        "TownSquare", 
+	        "Trails", 
+	        "Ogden", 
+	        "Hualapai", 
+	        "CentennialHills", 
+	        "District"
+	    ];
+        
+        //====== END GLOBAL VARIABLES =========
+        
+        //reset the active diet types (to All)
+        function resetActiveDietTypes(){
+            
+            //reset the variable
+            activeDietTypes["All"] = true;
+            activeDietTypes["dfm"] = false;
+            activeDietTypes["df"] = false
+            activeDietTypes["gfm"] = false;
+            activeDietTypes["gf"] = false
+            activeDietTypes["vg"] = false;
+            activeDietTypes["vgm"] = false;
+            activeDietTypes["kt"] = false;
+            activeDietTypes["ktm"] = false;
+            
+            //update the css for the buttoms
+            
+            //deselect all buttons
+            vDietCategories.forEach((element, index) => {
+			    document.getElementById("vDietCategory" + element).style.backgroundColor = "transparent";
+			    document.getElementById("vDietCategory" + element).style.color = "#DE6F2C";
+		    });
+		    
+	    	//select the all button
+			document.getElementById("vDietCategoryAll").style.backgroundColor = "#DE6F2C";
+			document.getElementById("vDietCategoryAll").style.color = "white";
+        }
+        
+        //reset the location 
+        function resetLocation(){
+                //unselect all buttons
+                vLocations.forEach((element, index) => {
+				    document.getElementById("vLocation" + element).style.backgroundColor = "transparent";
+				    document.getElementById("vLocation" + element).style.color = "#DE6F2C";
+		        });
+		        //style the selected button
+		        document.getElementById("vLocationAll").style.backgroundColor = "#DE6F2C";
+				document.getElementById("vLocationAll").style.color = "white";
+        }
+        
+        //fade out everything
+        function fadeAllOut(){
+            //disable clicks
+            removeClicks();
+            
+			$(".vMenuItem").fadeOut(500);
+			
+			setTimeout(function(){
+			    fadeInItems();
+		        $(".vCategoryHeader").css("display", "none");
+			}, 500);
+        }
+        
+        function showHeader(){
+            $("#" + currentMealType + "Header2").css("display", "block");   
+        }
+        
+        //show relevant headers
+        function showHeaderAll(){
+            for(i = 0; i < categories.length; i++){
+                console.log(i);
+                //loop through all the categories and check for items, if there are items then show the header
+                if(document.querySelectorAll('.vMenuItem.' + categories[i] + ':not([style*="display:none"]):not([style*="display: none"])').length){
+                    console.log("show header for " + categories[i]);
+                    $("#" + categories[i] + "Header2").css("display", "block");   
+                    //$("#" + categories[i] + "Header2").fadeIn(500);  
+                } else {
+                    $("#" + categories[i] + "Header2").css("display", "none");
+                    //$("#" + categories[i] + "Header2").fadeOut(500);  
+                }
+            }    
+        }
+        
+        //note: some items dont have a dietary restriction?? THIS is causing multiple issues
+        
+        //fade in the items using the 3 global variables tracking the filtering selection
+        function fadeInItems(){
+            
+            console.log("fade in items")
+            
+            //wrapped in a 500ms timer because it takes 500s to fade OUT all the items
+            setTimeout(function(){
+                
+                //show the menu item if it has the correct mealType AND any of the active diets AND the location
+                
+                if(activeDietTypes["All"]){
+                    if(currentLocation == "All"){
+                        if(currentMealType == "All"){
+                            $(".vMenuItem").fadeIn(500, function(){
+                                addClicks();
+                                showHeaderAll();
+                            }); 
+                        } else {
+                            showHeader();
+                            $(".vMenuItem." + currentMealType).fadeIn(500, function(){
+                                addClicks();
+                            });
+                        }
+                    } 
+                    else {
+                        if(currentMealType == "All"){
+                            for(i = 1; i < categories.length; i++){
+                                $(".vMenuItem." + categories[i] + "." + currentLocation).fadeIn(500, function(){
+                                    addClicks();
+                                    showHeaderAll();
+                                });    
+                            }
+                        } 
+                        else {
+                            showHeader();
+                            //here handle a special case for beverages which doesn't have diet categories. And it won't matter even if they add it
+                            //since this is ALL idc
+                            if(currentMealType == "Beverages"){
+                                for(i = 1; i < vDietCategories.length; i++){ //skipping "All"
+                                    console.log(".vMenuItem." + currentMealType + "." + currentLocation);
+                                    $(".vMenuItem." + currentMealType + "."  + currentLocation).fadeIn(500, function(){
+                                        addClicks();
+                                    });
+                                }
+                            }
+                            else {
+                                for(i = 1; i < vDietCategories.length; i++){ //skipping "All"
+                                    console.log(".vMenuItem." + currentMealType + "." + vDietCategories[i] + "." + currentLocation);
+                                    $(".vMenuItem." + currentMealType + "." + vDietCategories[i] + "." + currentLocation).fadeIn(500, function(){
+                                        addClicks();
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    if(currentLocation == "All"){
+                        if(currentMealType == "All"){
+                           Object.keys(activeDietTypes).forEach(key => {
+                                if(key != "All" && activeDietTypes[key]){
+                                    for(i = 1; i < vLocations.length; i++){ //skipping "All"
+                                        for(j = 1; j < categories.length; j++){
+                                            $(".vMenuItem." + categories[j] + "." + key + "." + vLocations[i]).fadeIn(500, function(){
+                                                addClicks();
+                                                showHeaderAll();
+                                            });    
+                                        }
+                                    }
+                                }
+                           });
+                        } else {
+                            Object.keys(activeDietTypes).forEach(key => {
+                                if(key != "All" && activeDietTypes[key]){
+                                    showHeader();
+                                    for(i = 1; i < vLocations.length; i++){ //skipping "All"
+                                        $(".vMenuItem." + currentMealType + "." + key + "." + vLocations[i]).fadeIn(500, function(){
+                                            addClicks();
+                                        });
+                                    }
+                                }
+                            });     
+                        }
+                    } else {
+                        if(currentMealType == "All"){
+                           Object.keys(activeDietTypes).forEach(key => {
+                                if(key != "All" && activeDietTypes[key]){
+                                    for(j = 1; j < categories.length; j++){
+                                        $(".vMenuItem." + categories[j] + "." + key + "." + currentLocation).fadeIn(500, function(){
+                                            addClicks();
+                                            showHeaderAll();
+                                        });    
+                                    }
+                                }
+                            });    
+                        } else {
+                            Object.keys(activeDietTypes).forEach(key => {
+                                showHeader();
+                                if(key != "All" && activeDietTypes[key]){
+                                    $(".vMenuItem." + currentMealType + "." + key + "." + currentLocation).fadeIn(500, function(){
+                                        addClicks();
+                                    });
+                                }
+                            });
+                        }
+                    }
+                }
+                
+                
+            }, 250);
+        }
+        
+        //changes or selects the meal type
+        function vSelectMealType(mealType){
+            
+            //reset the sub filtering
+            
+            //change the diet category back to all
+            resetActiveDietTypes();
+			
+			//set the Location back to "All" - TBD
+			resetLocation();
+			
+		    //update the meal type and reset the diet actives and the location to all
+			currentMealType = mealType;
+			
+			//reset location
+			currentLocation = "All";
+			
+			//fade everything out
+			fadeAllOut();
+			
+			//now that all the variables have been updated...
+			
+			//fade all items that match the selected meal type back in
+		    //fadeInItems();
+            
+        }
+        
+        //toggle the boolean of the diet type (whether it is active or not)
+        function toggleDietType(dietType){
+            //if it is active, turn it off
+            if(activeDietTypes[dietType]){
+                //dfm turn off both
+                if(dietType == "dfm"){
+                    activeDietTypes["dfm"] = false; 
+                    activeDietTypes["df"] = false; 
+                }
+                //gfm turn off both
+                else if(dietType == "gfm"){
+                    activeDietTypes["gfm"] = false; 
+                    activeDietTypes["gf"] = false; 
+                }
+                //vg turn off both
+                else if(dietType == "vg"){
+                    activeDietTypes["vgm"] = false; 
+                    activeDietTypes["vg"] = false; 
+                }
+                //kt turn off both
+                else if(dietType == "kt"){
+                    activeDietTypes["ktm"] = false; 
+                    activeDietTypes["kt"] = false; 
+                }
+                else {
+                    activeDietTypes[dietType] = false; 
+                }
+                //handle the css of the button
+                document.getElementById("vDietCategory" + dietType).style.backgroundColor = "transparent";
+			    document.getElementById("vDietCategory" + dietType).style.color = "#DE6F2C";
+            } else {
+                //dfm turn off both
+                if(dietType == "dfm"){
+                    activeDietTypes["dfm"] = true; 
+                    activeDietTypes["df"] = true; 
+                }
+                //gfm turn off both
+                else if(dietType == "gfm"){
+                    activeDietTypes["gfm"] = true; 
+                    activeDietTypes["gf"] = true; 
+                }
+                //vg turn off both
+                else if(dietType == "vg"){
+                    activeDietTypes["vgm"] = true; 
+                    activeDietTypes["vg"] = true; 
+                }
+                //kt turn off both
+                else if(dietType == "kt"){
+                    activeDietTypes["ktm"] = true; 
+                    activeDietTypes["kt"] = true; 
+                }
+                else {
+                    activeDietTypes[dietType] = true; 
+                }
+                //handle the css of the button
+                document.getElementById("vDietCategory" + dietType).style.backgroundColor = "#DE6F2C";
+			    document.getElementById("vDietCategory" + dietType).style.color = "white";
+            }
+           
+        }
+        
+        function activeDietTypesCount(){
+            var count = 0;
+            Object.keys(activeDietTypes).forEach(key => {
+                if(activeDietTypes[key]){
+                    count++;
+                }
+            });
+            return count;
+        }
+        
+        //select the diet type
+        function vSelectDietType(dietType){
+            //if all is active already and they try to click it again (deselect) do nothing
+            if(dietType == "All"){
+                
+                if(activeDietTypes["All"] == true){
+                    return;
+                }
+                else{
+                    //turn all on
+                    toggleDietType("All"); 
+                    //turn everything else off
+                    for(i = 1; i < vDietCategories.length; i++){
+                        var dietCategory = vDietCategories[i];
+                        activeDietTypes[dietCategory] = false;
+                        document.getElementById("vDietCategory" + dietCategory).style.backgroundColor = "transparent";
+			            document.getElementById("vDietCategory" + dietCategory).style.color = "#DE6F2C";
+                    }
+                }
+                
+                fadeAllOut();
+                fadeInItems();   
+                
+            } else {
+                if(activeDietTypes["All"]){
+                     toggleDietType("All");
+                }
+                //if trying to unselect the only remaining diet type, do nothing
+                if(activeDietTypesCount() == 1 && activeDietTypes[dietType]){
+                    return;
+                }
+                //otherwise toggle the selected diet type and fade everything out then fade back in
+                toggleDietType(dietType);
+                fadeAllOut();
+                //fadeInItems();    
+            }
+        }
+        
+        function vSelectLocation(location){
+            //if the location selected is all, but it is already selected, do nothing
+            if(location == "All"){
+                if(document.getElementById("vLocationAll").style.backgroundColor == "#DE6F2C"){
+                    return;
+                }
+                else {
+                    //unselect all buttons
+                    vLocations.forEach((element, index) => {
+    				    document.getElementById("vLocation" + element).style.backgroundColor = "transparent";
+    				    document.getElementById("vLocation" + element).style.color = "#DE6F2C";
+			        });
+			        //style the selected button
+			        document.getElementById("vLocation" + location).style.backgroundColor = "#DE6F2C";
+    				document.getElementById("vLocation" + location).style.color = "white";
+                }
+            } else {
+                //unselect all buttons
+                vLocations.forEach((element, index) => {
+				    document.getElementById("vLocation" + element).style.backgroundColor = "transparent";
+				    document.getElementById("vLocation" + element).style.color = "#DE6F2C";
+		        });
+		        //style the selected button
+		        document.getElementById("vLocation" + location).style.backgroundColor = "#DE6F2C";
+				document.getElementById("vLocation" + location).style.color = "white";
+            }
+            currentLocation = location;
+            console.log(currentLocation);
+            fadeAllOut();
+            //fadeInItems();
+        }
+        
+        vCreateItems();
+    </script>
+<!-- Add onclicks for the menu catgories, the plugin removes it for some reason -->
+<script>
+	var categories = [
+		"All",
+		"Breakfast",
+		"Salads",
+		"Sandwiches",
+		"Wraps",
+		"Pasta",
+		"FreshSqueezedJuices",
+		"Smoothies",
+		"Coffee",
+		"Soup",
+		"Kids",
+		"Beverages",
+		"Bakery",
+		"Sides"
+	];
+	
+	var darkOrangeFileNames = [
+	    "all-menu-dark-orange.png",
+	    "breakfast-dark-orange.png",
+	    "salads-dark-orange.png",
+	    "sandwich-dark-orange.png",
+	    "wraps-dark-orange.png",
+	    "pasta-dark-orange.png",
+	    "juices-dark-orange.png",
+	    "smoothies-dark-orange.png",
+	    "coffee-dark-orange.png",
+	    "soup-dark-orange.png",
+	    "kids-dark-orange.png",
+	    "beverages-dark-orange.png",
+	    "bakery-dark-orange-512.png",
+	    "sides-dark-orange-260.png"
+	];
+	
+	var lightOrangeFileNames = [
+	    "all-menu-light-orange.png",
+	    "breakfast-light-orange.png",
+	    "salad-light-orange.png",
+	    "sandwich-light-orange.png",
+	    "wraps-light-orange.png",
+	    "pasta-light-orange.png",
+	    "juices-light-orange.png",
+	    "smoothies-light-orange.png",
+	    "coffee-light-orange.png",
+	    "soup-light-orange.png",
+	    "kids-light-orange.png",
+	    "beverages-light-orange.png",
+	    "bakery-light-orange.png",
+	    "sides-light-orange.png"
+	];
+	
+	//sets all icons to black
+	function resetIcons(){
+	    console.log("set all icons to dark orange");
+	    categories.forEach((element, index) => {
+	        $("#vMenuCategory" + (index + 1)).css("color", "#DE6F1D");
+		    $("#vMenuCategory" + (index + 1) + " > .vMenuCategoryImgContainer " + "> img").attr("src", "/wp-content/uploads/2022/02/" + darkOrangeFileNames[index]);
+	    });
+	}
+	
+	//changes selected icon to orange, makes the rest of the icons black
+	function selectIcon(index){
+	    //reset all items to black
+	    resetIcons();
+	    //using the index, change the icon to orange 
+	    console.log("use the orange image: " + lightOrangeFileNames[index]);
+	    $("#vMenuCategory" + (index + 1) + " > .vMenuCategoryImgContainer " + "> img").attr("src", "/wp-content/uploads/2022/02/" + lightOrangeFileNames[index]);
+	    $("#vMenuCategory" + (index + 1)).css("color", "#F69F1A");
+	}
+	
+	function removeClicks(){
+	    categories.forEach((element, index) => {
+    		document.getElementById("vMenuCategory" + (index + 1)).onclick = function(){
+    		    return false;
+    		};
+    	} );
+	}
+	
+	function addClicks(){
+	    categories.forEach((element, index) => {
+    		document.getElementById("vMenuCategory" + (index + 1)).onclick = function(){
+    			//select the mealtype (logic)
+    			vSelectMealType(categories[index].replace(/\s/g, ''));
+    			//select the mealtype (visual effects)
+    			selectIcon(index);
+    		};
+    	} );
+	}
+	
+	categories.forEach((element, index) => {
+		document.getElementById("vMenuCategory" + (index + 1)).onclick = function(){
+			//select the mealtype (logic)
+			vSelectMealType(categories[index].replace(/\s/g, ''));
+			//select the mealtype (visual effects)
+			selectIcon(index);
+		};
+	} );
+</script>
+<style>
+@media only screen and (min-width: 900px){
+	#wpsl-gmap {
+		height: 640px !important;
+	}
+	#wpsl-stores {
+    	height: 640px !important;
+	}
+}
+
+</style>
+<div id="itemModal">
+    <div id="itemModalInner">
+        
+        <!-- X button -->
+        <div id="exitModal" onclick="closeModal()">X</div>
+        
+        <!-- HTML structure -->
+        <div class="vRow">
+            
+            <!-- Image Column -->
+            
+            <div class="vColumn" id="imageCol">
+                <!-- image -->
+                <img id="itemImage" src="null.jpg" />
+            </div>
+            
+            <!-- Info Column -->
+            
+            <div class="vColumn" id="infoCol">
+               <div id="itemName"></div>
+                <!-- Description -->
+                <div class="title" id="itemDescriptionTitle">Description:</div>
+                <div id="itemDescription"></div>
+                <!-- Dietary Information -->
+                <div class="title" id="itemDietaryInfoTitle">Dietary Information:</div>
+                <div id="itemDietaryInfo"></div>
+                <!-- Dairy Free Modifications-->
+                <div class="title" id="itemDFMTitle">Dairy Free Modifications:</div>
+                <div id="itemDFM"></div>
+                <!-- Gluten Free Modifications-->
+                <div class="title" id="itemGFMTitle">Gluten Free Modifications:</div>
+                <div id="itemGFM"></div>
+                <!-- Vegan Modifications-->
+                <div class="title" id="itemVGMTitle">Vegan Modifications:</div>
+                <div id="itemVGM"></div>
+                <!-- Keto Modifications-->
+                <div class="title" id="itemKTMTitle">Keto Modifications:</div>
+                <div id="itemKTM"></div>
+            </div>
+            
+        </div>
+        
+    </div>
+</div>

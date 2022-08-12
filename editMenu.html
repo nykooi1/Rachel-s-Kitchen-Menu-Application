@@ -1,0 +1,298 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en" xml:lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Rachel's Kitchen Menu Editor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<style>
+/* Global Styles */
+body {
+	margin: 0;
+	font-family: "Open Sans", Helvetica, Arial, sans-serif;
+	font-size: 1rem;
+	font-weight: 200;
+	line-height: 1.5;
+	background-color: #ffffff;
+	}
+#vMenuItems{
+    padding-left: 5px;
+    padding-right: 5px;
+}
+input{
+    width:30%;
+    margin-bottom: 5px;
+}
+textarea{
+    width:30%;
+    height: 100px;
+    margin-bottom: 5px;
+}
+@media only screen and (max-width: 600px) {
+  input, textarea {
+    width: 100%;
+  }
+}
+#vFooter{
+    width: 100%;
+    height: 50px;
+    background-color: #DE6F2C;
+    position: fixed;
+    bottom: 0;
+}
+#submitBtn{
+    position: fixed;
+    height:50px;
+    bottom: 0;
+    right: 0;
+    padding: 10px 20px;
+    background-color: #fff;
+    border: 1px solid black;
+}
+#submitBtn:hover{
+    cursor: pointer;
+}
+</style>
+<!--<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>-->
+<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<script>
+
+    function createUUID() {
+       return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+       });
+    }
+        
+    //create all the item divs, with their respective classes
+    function vCreateItems(){
+        //read in the json file
+        var xhttp = new XMLHttpRequest();
+        xhttp.onload = function() {
+
+            //read the menu json into a js object
+            var menuItems = JSON.parse(this.responseText);
+   
+            console.log(menuItems);
+
+	    //stores the html for all the item divs (will be injected into the container)
+            var allItemsHTMLString = "";
+   
+            //array of the category keys
+            var categories = Object.keys(menuItems);
+            
+            //loop through each category
+            for(i = 0; i < categories.length; i++){
+                var category = categories[i];
+                
+                
+                //add category header
+                allItemsHTMLString += "<h2 class='vCategoryHeader' id='" + categories[i].replace(/\s/g, '') + "Header2'>" + category + "</h2>";
+                allItemsHTMLString += "<form>";
+                //loop through each item in the category
+                var counter = 0;
+                for(j = 0; j < menuItems[category].length; j++){
+                    
+                    var menuItem = menuItems[category][j];
+                    
+                    //loop through each item in the category
+                    var itemString = "";
+                    
+                    //create the dietary category divs (for display)
+                    var dietaryCategoriesString = "";
+                    
+                    //create the dietary category classes
+                    //var dietaryCategoriesClassesString = "";
+                    
+		   var dietaryInformationString = "";
+
+		   //diet information change from array to string with newline
+                    if(menuItem["Dietary Information"] != ""){
+                        for(k = 0; k < menuItem["Dietary Information"].length; k++){
+                            dietaryInformationString += menuItem["Dietary Information"][k];
+                            if(menuItem["Dietary Information"].length != 1 && k != menuItem["Dietary Information"].length){
+                                dietaryInformationString += '\n';
+                            }
+                        }
+                    }
+
+                    
+                    //diet category change from array to string with newline
+                    if(menuItem["Diet Category"] != ""){
+                        for(k = 0; k < menuItem["Diet Category"].length; k++){
+                           // dietaryCategoriesClassesString += menuItem["Diet Category"][k];
+                            dietaryCategoriesString += menuItem["Diet Category"][k];
+                            if(menuItem["Diet Category"].length != 1 && k != menuItem["Diet Category"].length){
+                                dietaryCategoriesString += '\n';
+                            }
+                        }
+                    }
+                
+                    //dfm change from array to string with newline
+                    var dfmString = "";
+                    if(menuItem["dfm"] != "" && menuItem["dfm"] != null){
+                        for(k = 0; k < menuItem["dfm"].length; k++){
+                            dfmString += menuItem["dfm"][k] + '\n';
+                        }
+                    }
+                    
+                    //gfm change from array to string with newline
+                    var gfmString = "";
+                    if(menuItem["gfm"] != "" && menuItem["gfm"] != null){
+                        for(k = 0; k < menuItem["gfm"].length; k++){
+                            gfmString += menuItem["gfm"][k] + '\n';
+                        }
+                    }
+                    
+                    //vgm change from array to string with newline
+                    var vgmString = "";
+                    if(menuItem["vgm"] != "" && menuItem["vgm"] != null){
+                        for(k = 0; k < menuItem["vgm"].length; k++){
+                            vgmString += menuItem["vgm"][k] + '\n';
+                        }
+                    }
+                    
+                    //ktm change from array to string with newline
+                    var ktmString = "";
+                    if(menuItem["ktm"] != null && menuItem["ktm"] != ""){
+                        for(k = 0; k < menuItem["ktm"].length; k++){
+                            vgmString += menuItem["ktm"][k] + '\n';
+                        }
+                    }
+                    
+                    var locationsString = "";
+                    if(menuItem["Locations"] != null && menuItem["Locations"] != "ALL"){
+                        for(k = 0; k < menuItem["Locations"].length; k++){
+                            locationsString += menuItem["Locations"][k] + '\n';
+                        }
+                    }
+                    
+                    
+                    //note: the classes will store the necessary categorizations
+                    
+                    itemString += "<div><div class='vMenuItem " + category.replace(/\s+/g, '') + "'>";
+                    itemString += "<div><input type='hidden' class='vMenuItemImage" + counter + "' value='"+ menuItem["url"] + "'></input></div>";
+                    itemString += '<div><div class="vMenuItemWordBox"><div>Menu Item</div><input class="vMenuItemName'+ counter + '" value="' + menuItem["Name"] + '" placeholder="Name"></input></div>';
+                    //itemString += "<div><div class='vMenuItemWordBox'><div>Menu Item</div><input class='vMenuItemName"+ counter + "' value='" + menuItem["Name"] + "' placeholder='Name'></input></div>";
+                    itemString += "<div><div>Price</div><input class='vMenuItemPrice" + counter + "' value='" + menuItem["Price"] + "' placeholder='Price'></input></div>";
+                    itemString += "<div><div>Dietary Information</div><textarea class='vMenuItemDietaryInformation" + counter + "' value='" + dietaryInformationString + "' placeholder='Calories:100'>" + dietaryInformationString + "</textarea></div>";
+                    itemString += "<div><div>Description</div><textarea class='vMenuItemDescription" + counter + "' value='"+ menuItem["Description"]+ "' placeholder='Description'>"+menuItem["Description"]+"</textarea></div>";
+                    itemString += "<div><div>Dietary Categories</div><textarea class='vMenuItemDietary" + counter + "' value='" +  dietaryCategoriesString + "' placeholder='Dietary Categories'>"+dietaryCategoriesString+"</textarea></div>";
+                    itemString += "<div><div>Dairy Free w/ Mod</div><textarea class='vMenuItemDfm" + counter + "' value='" +  dfmString + "' placeholder='dfm'>"+dfmString+"</textarea></div>";
+                    itemString += "<div><div>Gluten Free w/ Mod</div><textarea class='vMenuItemGfm" + counter + "' value='" +  gfmString + "' placeholder='gfm'>"+gfmString+"</textarea></div>";
+                    itemString += "<div><div>Vegan w/ Mod</div><textarea class='vMenuItemVgm" + counter + "' value='" +  vgmString+ "' placeholder='vgm'>"+vgmString+"</textarea></div>";
+                    itemString += "<div><div>Keto w/ Mod</div><textarea class='vMenuItemKtm" + counter + "' value='" +  ktmString + "' placeholder='vgm'>"+ktmString+"</textarea></div>";
+                    itemString += "<div><div>Locations</div><textarea class='vMenuItemLocations" + counter + "' value='" +  locationsString + "' placeholder='locations'>"+locationsString+"</textarea></div>";
+                    itemString += "</div></div><br><br>";
+                    
+                    //add the item div to the master html string (to be injected)
+                    allItemsHTMLString += itemString;
+                    counter++;
+                }
+            }
+            
+            allItemsHTMLString += "</form>";
+            //after all items have been added, inject the html
+            document.getElementById("vMenuItems").innerHTML =allItemsHTMLString;
+        };
+        xhttp.open("GET", "https://www.vebien.com/testingmenu3.json?" + createUUID(), true);
+        xhttp.send();
+    }
+    
+    // menuJSON to be sent to menu.json
+    var menuJSON = Object();
+    
+    // create each category object
+    function vMakeSubObject(vCategory){
+        menuJSON[vCategory] = Array();
+        $('.' + vCategory.replace(/\s+/g, '')).each(function(i, obj) {
+            var menuItem = $('.' + vCategory.replace(/\s+/g, '') + ' .vMenuItemName' + i).val();
+            var price = $('.' + vCategory.replace(/\s+/g, '') +  ' .vMenuItemPrice' + i).val();
+            var menuDescription = $('.' + vCategory.replace(/\s+/g, '') + ' .vMenuItemDescription' + i).val();
+            var menuDiet = $('.' + vCategory.replace(/\s+/g, '') + ' .vMenuItemDietary' + i).val();
+            var url = $('.' + vCategory.replace(/\s+/g, '') + ' .vMenuItemImage' + i).val();
+            var dfm = $('.' + vCategory.replace(/\s+/g, '') + ' .vMenuItemDfm' + i).val();
+            var gfm = $('.' + vCategory.replace(/\s+/g, '') + ' .vMenuItemGfm' + i).val();
+            var vgm = $('.' + vCategory.replace(/\s+/g, '') + ' .vMenuItemVgm' + i).val();
+            var ktm = $('.' + vCategory.replace(/\s+/g, '') + ' .vMenuItemKtm' + i).val();
+            var locations = $('.' + vCategory.replace(/\s+/g, '') + ' .vMenuItemLocations' + i).val();
+            var dietaryInformation = $('.' + vCategory.replace(/\s+/g, '') + ' .vMenuItemDietaryInformation' + i).val();
+            menuJSON[vCategory][i] = Object();
+            
+            menuJSON[vCategory][i]["Name"] = menuItem;
+            menuJSON[vCategory][i]["Description"] = menuDescription;
+            menuJSON[vCategory][i]["Additional Description"] = "";
+            menuJSON[vCategory][i]["Dietary Information"] = Array();
+	        menuJSON[vCategory][i]["Dietary Information"] = dietaryInformation.split("\n");
+            //menuJSON[vCategory][i]["Locations"] = "ALL";
+            menuJSON[vCategory][i]["Price"] = price;
+            menuJSON[vCategory][i]["Diet Category"] = Array();
+            menuJSON[vCategory][i]["Diet Category"] = menuDiet.split("\n");
+            menuJSON[vCategory][i]["dfm"] = Array();
+            menuJSON[vCategory][i]["dfm"] = dfm.split("\n");
+            menuJSON[vCategory][i]["gfm"] = Array();
+            menuJSON[vCategory][i]["gfm"] = gfm.split("\n");
+            menuJSON[vCategory][i]["vgm"] = Array();
+            menuJSON[vCategory][i]["vgm"] = vgm.split("\n");
+            menuJSON[vCategory][i]["ktm"] = Array();
+            menuJSON[vCategory][i]["ktm"] = ktm.split("\n");
+            if(locations.split("\n")[0] != ''){
+                console.log(locations.split("\n"));
+                menuJSON[vCategory][i]["Locations"] = Array();
+                menuJSON[vCategory][i]["Locations"] = locations.split("\n");    
+            } else {
+                menuJSON[vCategory][i]["Locations"] = "ALL";
+            }
+            menuJSON[vCategory][i]["url"] = url;
+            
+        });
+    }
+    
+    var categories = ["Breakfast", "Salads", "Sandwiches", "Wraps", "Pasta", "Fresh Squeezed Juices", "Smoothies",
+    "Coffee", "Soup", "Kids", "Beverages", "Bakery", "Sides"];
+    
+    // On submit, get values of all menu items
+    function vSubmit(){
+        $('#submitBtn').on('click', function(){
+            for(i = 0; i < categories.length; i++){
+                vMakeSubObject(categories[i]);
+            }
+            console.log(menuJSON);
+            var xhttp = new XMLHttpRequest();
+            xhttp.onload = function() {
+            	window.scrollTo(0, 0);
+                //location.reload();
+            }
+            xhttp.open("POST", "https://www.vebien.com/makeJson.php", true);
+            console.log(JSON.stringify(menuJSON));
+	    xhttp.send(JSON.stringify(menuJSON));
+            /*$.ajax({
+                type: 'post',
+                url: 'makeJson.php',
+                data: JSON.stringify(menuJSON),
+                contentType: "application/json; charset=utf-8",
+                traditional: true,
+                success: function (data) {
+                    window.scrollTo(0, 0);
+                    location.reload();
+                }
+            });*/
+        });
+    }
+        
+    $( document ).ready(function() {
+        vSubmit();
+    });
+        
+    vCreateItems();
+</script>
+</head>
+<body>
+<div id="vMenuItems"></div>
+<div id="vFooter"></div>
+<button id='submitBtn'>Submit</button>
+</body>
+</html>
